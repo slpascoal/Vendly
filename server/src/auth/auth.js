@@ -2,7 +2,7 @@ import express from 'express'
 import passport from 'passport'
 import LocalStrategy from 'passport-local'
 import crypto from 'crypto'
-import { Mongo } from '../database/mongo'
+import { Mongo } from '../database/mongo.js'
 import jwt from 'jsonwebtoken'
 import { ObjectId } from 'mongodb'
 
@@ -50,10 +50,10 @@ passport.use(
 
 const authRouter = express.Router()
 
-authRouter.post('/singup', async (req, res) => {
-  const checkUser = await Mongo.db
-    .collection(collectionName)
-    .findOne({ email: req.body.email })
+authRouter.post('/signup', async (req, res) => {
+  const checkUser = await Mongo.db.collection(collectionName).findOne({
+    email: req.body.email,
+  })
 
   if (checkUser) {
     return res.status(500).send({
@@ -87,7 +87,29 @@ authRouter.post('/singup', async (req, res) => {
       const result = await Mongo.db.collection(collectionName).insertOne({
         email: req.body.email,
         password: hashedPassword,
+        salt,
       })
+
+      if (result.insertedId) {
+        const user = await Mongo.db
+          .collection(collectionName)
+          .findOne({ _id: new ObjectId(result.insertedId) })
+
+        const token = jwt.sign(user, 'laranjaTaybr')
+
+        return res.send({
+          sucess: true,
+          statusCode: 200,
+          body: {
+            text: 'User created successfully!',
+            token,
+            user,
+            logged: true,
+          },
+        })
+      }
     }
   )
 })
+
+export default authRouter
