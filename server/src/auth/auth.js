@@ -112,4 +112,12 @@ authRouter.post('/signup', async (req, res) => {
   )
 })
 
+authRouter.post('/login', (req, res) => {
+  passport.authenticate('local', (err, user) => {
+    if (err) {
+      return res.send()
+    }
+  })
+})
+
 export default authRouter
