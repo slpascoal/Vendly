@@ -20,7 +20,7 @@ passport.use(
         return callback(null, false)
       }
 
-      const saltBuffer = user.salt.saltBuffer
+      const saltBuffer = user.salt.buffer
 
       crypto.pbkdf2(
         password,
@@ -115,9 +115,37 @@ authRouter.post('/signup', async (req, res) => {
 authRouter.post('/login', (req, res) => {
   passport.authenticate('local', (err, user) => {
     if (err) {
-      return res.send()
+      return res.status(500).send({
+        sucess: false,
+        statusCode: 500,
+        body: {
+          text: 'Error during authentication',
+          err,
+        },
+      })
     }
-  })
+
+    if (!user) {
+      return res.status(400).send({
+        sucess: false,
+        statusCode: 400,
+        body: {
+          text: 'User not found',
+        },
+      })
+    }
+
+    const token = jwt.sign(user, 'laranjaTaybr')
+    return res.status(200).send({
+      sucess: true,
+      statusCode: 200,
+      body: {
+        text: 'User logged in correctly',
+        user,
+        token,
+      },
+    })
+  })(req, res)
 })
 
 export default authRouter
